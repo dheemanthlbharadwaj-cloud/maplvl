@@ -193,6 +193,38 @@ for(let i=0;i<N;i++){
 const TOTAL_H = TOP_PAD + (N-1)*SPACING + 260;
 document.getElementById('frame').style.height = TOTAL_H+'px';
 
+const nodeLayer=document.getElementById('nodeLayer');
+let current=0;
+const completed=Array(N).fill(false);
+const starsArr=Array(N).fill(0);
+const btnForBiome=(biome)=>biome==='ruins'?ASSETS.btnDesert:ASSETS.btnForest;
+
+// Attach each supplied cat exactly once. The first cat is the player marker;
+// the remaining three are world companions placed on distinct nodes.
+const attachedPlayerCat=document.createElement('img');
+attachedPlayerCat.className='catAttached';
+attachedPlayerCat.src=ATTACHED_CATS[0];
+attachedPlayerCat.alt='';
+attachedPlayerCat.width=72;
+attachedPlayerCat.height=72;
+document.getElementById('frame').appendChild(attachedPlayerCat);
+
+const companionCats=ATTACHED_CATS.slice(1).map((src,idx)=>{
+  const im=document.createElement('img');
+  im.className='catAttached static';
+  im.src=src;
+  im.alt='';
+  im.width=60;
+  im.height=60;
+  const n=nodes[[4,8,12][idx]];
+  im.style.left=(n.x + (idx%2?-58:58))+'px';
+  im.style.top=(n.y + 12)+'px';
+  im.style.transform=(idx%2)?'translate(-50%,-100%) scaleX(-1)':'translate(-50%,-100%)';
+  document.getElementById('frame').appendChild(im);
+  return im;
+});
+
+
 // ---------- terrain: actual tiles from Grass Land 2.0 + Ancient Ruins ----------
 const terrainLayer=document.getElementById('terrainLayer');
 const ruinsTop=Math.round(TOP_PAD+5.5*SPACING);
@@ -227,6 +259,7 @@ function addDeco(src, x, y, w, h, opts){
   if(opts && opts.flip) im.style.transform = (im.style.transform||'') + ' scaleX(-1)';
   decoLayer.appendChild(im);
 }
+// ---------- level nodes, movement, and path ----------
 function render(){
   nodeLayer.innerHTML = '';
   nodes.forEach((n, idx)=>{
@@ -248,76 +281,84 @@ function render(){
     if(completed[idx]){
       const starsWrap = document.createElement('div');
       starsWrap.className='stars';
-      for(let s=0;s<3;s++){
-        const st = document.createElement('img');
-        st.src = s < starsArr[idx] ? ASSETS.starFull : ASSETS.starEmpty;
-        starsWrap.appendChild(st);
+      for(let st=0; st<3; st++){
+        const star=document.createElement('img');
+        star.src = st < starsArr[idx] ? ASSETS.starFull : ASSETS.starEmpty;
+        starsWrap.appendChild(star);
       }
       el.appendChild(starsWrap);
     }
     if(!unlocked){
-      const lk = document.createElement('div');
+      const lk=document.createElement('div');
       lk.className='lock';
       el.appendChild(lk);
     }
 
-    el.addEventListener('click', ()=>onNodeClick(idx, el));
+    el.addEventListener('click',()=>onNodeClick(idx,el));
     nodeLayer.appendChild(el);
   });
-  placeCat(current, false);
+  placeCat(current,true);
 }
 
 function placeCat(idx, animate){
-  const n=nodes[idx], side=(idx%2===0)?-1:1;
-  if(!attachedPlayerCat) return;
-  attachedPlayerCat.style.left=(n.x+side*54)+'px';
-  attachedPlayerCat.style.top=(n.y+8)+'px';
-  attachedPlayerCat.style.transform=side<0?'translate(-50%,-100%)':'translate(-50%,-100%) scaleX(-1)';
+  const n=nodes[idx];
+  const side=(idx%2===0)?-1:1;
+  attachedPlayerCat.style.left=(n.x + side*54)+'px';
+  attachedPlayerCat.style.top=(n.y + 8)+'px';
+  attachedPlayerCat.style.transform=side<0
+    ? 'translate(-50%,-100%)'
+    : 'translate(-50%,-100%) scaleX(-1)';
+  if(!animate) attachedPlayerCat.classList.add('static');
+  else attachedPlayerCat.classList.remove('static');
 }
 
 function spawnPaws(x,y){
   for(let k=0;k<5;k++){
-    const p = document.createElement('div');
+    const p=document.createElement('div');
     p.className='paw';
-    p.style.left = (x-20+Math.random()*40)+'px';
-    p.style.top = (y-20+Math.random()*40)+'px';
-    p.style.opacity = '1';
+    p.style.left=(x-20+Math.random()*40)+'px';
+    p.style.top=(y-20+Math.random()*40)+'px';
     decoLayer.appendChild(p);
     let op=1;
-    const iv = setInterval(()=>{
-      op -= 0.05;
-      p.style.opacity = op;
-      if(op<=0){ clearInterval(iv); p.remove(); }
-    }, 40);
+    const iv=setInterval(()=>{
+      op-=0.05;
+      p.style.opacity=String(op);
+      if(op<=0){clearInterval(iv);p.remove();}
+    },40);
   }
 }
 
-function onNodeClick(idx, el){
-  const unlocked = idx===0 || completed[idx-1] || completed[idx];
+function onNodeClick(idx,el){
+  const unlocked=idx===0 || completed[idx-1] || completed[idx];
   if(!unlocked){
-    el.classList.add('shake');
-    setTimeout(()=>el.classList.remove('shake'), 400);
+    el.animate(
+      [{transform:'translate(-50%,-50%) translateX(-7px)'},{transform:'translate(-50%,-50%) translateX(7px)'},{transform:'translate(-50%,-50%)'}],
+      {duration:260}
+    );
     return;
   }
-  current = idx;
-  placeCat(idx, true);
+  current=idx;
   if(!completed[idx]){
-    completed[idx] = true;
-    starsArr[idx] = 1 + Math.floor(Math.random()*3);
-    spawnPaws(nodes[idx].x, nodes[idx].y);
+    completed[idx]=true;
+    starsArr[idx]=1+Math.floor(Math.random()*3);
+    spawnPaws(nodes[idx].x,nodes[idx].y);
   }
   render();
 }
 
-render();
-</script>
-</body>
-</html>const svg=document.getElementById('pathSvg');
-svg.setAttribute('width',FRAME_W); svg.setAttribute('height',TOTAL_H);
+// Build the winding route from the level coordinates, using a real Ancient Ruins
+// terrain tile as the foreground texture rather than a synthetic tinted path.
+const svg=document.getElementById('pathSvg');
+svg.setAttribute('width',FRAME_W);
+svg.setAttribute('height',TOTAL_H);
 svg.setAttribute('viewBox',`0 0 ${FRAME_W} ${TOTAL_H}`);
-svg.innerHTML=`<defs><pattern id="pathTex" patternUnits="userSpaceOnUse" width="32" height="32">
-<image href="${PACK_ASSETS.ancientTerrain}" x="-640" y="-288" width="1152" height="448" preserveAspectRatio="none"></image>
-</pattern></defs>`;
+svg.innerHTML=`<defs>
+  <pattern id="pathTex" patternUnits="userSpaceOnUse" width="32" height="32">
+    <image href="${PACK_ASSETS.ancientTerrain}" x="-640" y="-288"
+      width="1152" height="448" preserveAspectRatio="none"></image>
+  </pattern>
+</defs>`;
+
 function catmullRom2bezier(pts){
   let d=`M ${pts[0].x} ${pts[0].y} `;
   for(let i=0;i<pts.length-1;i++){
@@ -329,12 +370,40 @@ function catmullRom2bezier(pts){
   return d;
 }
 const pathD=catmullRom2bezier(nodes);
+
 const pathShadow=document.createElementNS('http://www.w3.org/2000/svg','path');
-pathShadow.setAttribute('d',pathD); pathShadow.setAttribute('fill','none'); pathShadow.setAttribute('stroke','rgba(0,0,0,.28)');
-pathShadow.setAttribute('stroke-width','40'); pathShadow.setAttribute('stroke-linecap','round'); pathShadow.setAttribute('transform','translate(0,5)'); svg.appendChild(pathShadow);
+pathShadow.setAttribute('d',pathD);
+pathShadow.setAttribute('fill','none');
+pathShadow.setAttribute('stroke','rgba(0,0,0,.28)');
+pathShadow.setAttribute('stroke-width','42');
+pathShadow.setAttribute('stroke-linecap','round');
+pathShadow.setAttribute('transform','translate(0,6)');
+svg.appendChild(pathShadow);
+
 const pathBorder=document.createElementNS('http://www.w3.org/2000/svg','path');
-pathBorder.setAttribute('d',pathD); pathBorder.setAttribute('fill','none'); pathBorder.setAttribute('stroke','#5b463b'); pathBorder.setAttribute('stroke-width','38'); pathBorder.setAttribute('stroke-linecap','round'); svg.appendChild(pathBorder);
+pathBorder.setAttribute('d',pathD);
+pathBorder.setAttribute('fill','none');
+pathBorder.setAttribute('stroke','#5b463b');
+pathBorder.setAttribute('stroke-width','39');
+pathBorder.setAttribute('stroke-linecap','round');
+svg.appendChild(pathBorder);
+
 const pathFg=document.createElementNS('http://www.w3.org/2000/svg','path');
-pathFg.setAttribute('d',pathD); pathFg.setAttribute('fill','none'); pathFg.setAttribute('stroke','url(#pathTex)'); pathFg.setAttribute('stroke-width','30'); pathFg.setAttribute('stroke-linecap','round'); svg.appendChild(pathFg);
+pathFg.setAttribute('d',pathD);
+pathFg.setAttribute('fill','none');
+pathFg.setAttribute('stroke','url(#pathTex)');
+pathFg.setAttribute('stroke-width','30');
+pathFg.setAttribute('stroke-linecap','round');
+svg.appendChild(pathFg);
 
+// Add a richer spread of bundled props so the two biomes read as distinct zones.
+addDeco(PACK_ASSETS.ancientStructure,28,ruinsTop+80,150,185,{});
+addDeco(PACK_ASSETS.ancientStructure,302,ruinsTop+300,125,155,{flip:true});
+addDeco(PACK_ASSETS.ancientAltar,8,ruinsTop+690,112,145,{});
+addDeco(PACK_ASSETS.ancientShrine,300,ruinsTop+890,92,74,{sway:true});
+addDeco(PACK_ASSETS.ancientChalice,68,ruinsTop+1120,48,48,{sway:true});
 
+render();
+</script>
+</body>
+</html>
