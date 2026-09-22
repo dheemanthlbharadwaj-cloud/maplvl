@@ -1,0 +1,9 @@
+{
+  "animations": [
+    {"id":"cat-anim-01","source":"Animation 3 no bg (1).gif","uses":1},
+    {"id":"cat-anim-02","source":"Animation 1 0.5x speed no bg.gif","uses":1},
+    {"id":"cat-anim-03","source":"Animation 5 try 2 (1).gif","uses":1},
+    {"id":"cat-anim-04","source":"Animation 2 no bg (1).gif","uses":1}
+  ],
+  "duplicatePolicy":"Each source GIF exactly once."
+}
