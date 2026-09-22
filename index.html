@@ -64,8 +64,9 @@ function abs(rel){return new URL(rel,BASE).href}
 async function fetchText(rel){const r=await fetch(abs(rel));if(!r.ok)throw new Error("HTTP "+r.status+" for "+rel);return r.text()}
 function loadImage(src){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>rej(new Error("Image failed: "+src));im.src=src})}
 function numAttr(el,name,fallback=0){const v=el.getAttribute(name);return v==null?fallback:Number(v)}
-async function loadTileset(tsxRel){
-  const tsxUrl=abs(tsxRel),xml=new DOMParser().parseFromString(await fetchText(tsxRel),"application/xml"),root=xml.documentElement,imageEl=root.querySelector("image");
+async function loadTileset(tsxUrl){
+  const response=await fetch(tsxUrl);if(!response.ok)throw new Error("HTTP "+response.status+" for "+tsxUrl);
+  const xml=new DOMParser().parseFromString(await response.text(),"application/xml"),root=xml.documentElement,imageEl=root.querySelector("image");
   const image=await loadImage(new URL(imageEl.getAttribute("source"),tsxUrl).href),tw=numAttr(root,"tilewidth",32),th=numAttr(root,"tileheight",32),cols=numAttr(root,"columns",Math.floor(image.naturalWidth/tw)||1),animations={};
   for(const tile of Array.from(root.getElementsByTagName("tile"))){const anim=tile.getElementsByTagName("animation")[0];if(!anim)continue;animations[numAttr(tile,"id",0)]=Array.from(anim.getElementsByTagName("frame")).map(fr=>({tileid:numAttr(fr,"tileid",0),duration:numAttr(fr,"duration",100)}))}
   return{image,tw,th,cols,animations}
@@ -74,8 +75,8 @@ async function loadTmx(tmxRel){
   const xml=new DOMParser().parseFromString(await fetchText(tmxRel),"application/xml"),root=xml.documentElement,mapW=numAttr(root,"width"),mapH=numAttr(root,"height"),tw=numAttr(root,"tilewidth",32),th=numAttr(root,"tileheight",32),tilesets=[];
   for(const el of Array.from(root.children).filter(e=>e.tagName==="tileset")){
     const firstgid=numAttr(el,"firstgid",1),source=el.getAttribute("source");
-    const mapUrl=new URL(tmxRel,BASE),tsxPath=new URL(source,mapUrl).pathname.split("/").slice(3).join("/").replaceAll("%20"," ");
-    tilesets.push({firstgid,...await loadTileset(tsxPath)})
+    const mapUrl=new URL(tmxRel,BASE),tsxUrl=new URL(source,mapUrl).href;
+    tilesets.push({firstgid,...await loadTileset(tsxUrl)})
   }
   tilesets.sort((a,b)=>a.firstgid-b.firstgid);
   const layers=Array.from(root.children).filter(e=>e.tagName==="layer").map(layer=>{
