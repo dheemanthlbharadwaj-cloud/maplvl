@@ -1,137 +1,308 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kitty Climb — Tiled World Map</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kitty Climb</title>
 <style>
-:root{--ink:#4a3729;--tile:32px}
-*{box-sizing:border-box}html,body{margin:0;padding:0;background:#17221b}
-body{font-family:"Trebuchet MS","Segoe UI",sans-serif;display:flex;justify-content:center}
-#frame{position:relative;width:480px;max-width:100vw;height:2480px;overflow:hidden;background:#6f9d55;image-rendering:pixelated;box-shadow:0 0 56px rgba(0,0,0,.55)}
+:root{--ink:#4a3729}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#152019}
+body{display:flex;justify-content:center;font-family:"Trebuchet MS","Segoe UI",sans-serif}
+#frame{position:relative;width:480px;max-width:100vw;height:2500px;overflow:hidden;background:#6d9554;image-rendering:pixelated;box-shadow:0 0 60px rgba(0,0,0,.55)}
 #terrainLayer{position:absolute;inset:0;z-index:0;overflow:hidden}
-.mapZone{position:absolute;left:0;width:480px;height:620px;overflow:hidden}
-.mapZone canvas{display:block;width:480px;height:620px;image-rendering:pixelated}
-.biomeTag{position:absolute;right:18px;top:18px;padding:8px 12px;border:3px solid rgba(67,50,35,.72);background:rgba(245,222,165,.82);color:#4a3729;font-weight:900;font-size:12px;letter-spacing:1px;box-shadow:0 4px 0 rgba(0,0,0,.2);border-radius:10px;z-index:2}
-.transitionBand{position:absolute;left:0;width:480px;height:86px;z-index:2;pointer-events:none;background:linear-gradient(to bottom,rgba(116,161,80,0),rgba(103,128,84,.40),rgba(74,66,55,.18),rgba(74,66,55,0))}
-#pathSvg{position:absolute;left:0;top:0;z-index:3;pointer-events:none}
-.node{position:absolute;width:96px;height:96px;transform:translate(-50%,-50%);z-index:10;cursor:pointer;user-select:none}
-.node .base{width:100%;height:100%;background-repeat:no-repeat;background-size:100% 100%;image-rendering:pixelated;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 7px 3px rgba(0,0,0,.38));transition:transform .15s ease}
-.node.current .base{animation:pulse 1.1s ease-in-out infinite}.node.locked .base{filter:drop-shadow(0 7px 3px rgba(0,0,0,.38)) grayscale(.7) brightness(.75)}.node:active .base{transform:scale(.9)}
-.node .num{font-size:32px;font-weight:900;color:var(--ink);line-height:1;text-shadow:0 1px 0 rgba(255,255,255,.55)}
-.node.locked .num{color:#5b5b5b;opacity:.88}
+.mapZone{position:absolute;left:0;width:480px;overflow:hidden}
+.mapCanvas{position:absolute;left:0;top:0;display:block;image-rendering:pixelated}
+.fadeIn{z-index:2;-webkit-mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.14) 14%,#000 34%);mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.14) 14%,#000 34%)}
+.fadeOut{z-index:1;-webkit-mask-image:linear-gradient(to bottom,#000 60%,rgba(0,0,0,.3) 88%,transparent 100%);mask-image:linear-gradient(to bottom,#000 60%,rgba(0,0,0,.3) 88%,transparent 100%)}
+.mapProp{position:absolute;z-index:4;pointer-events:none;image-rendering:pixelated;transform-origin:50% 88%;filter:drop-shadow(0 3px 2px rgba(0,0,0,.18))}
+.mapProp.sway{animation:swayProp var(--dur,4.2s) ease-in-out infinite alternate;animation-delay:var(--delay,0s)}
+@keyframes swayProp{0%{transform:rotate(-1.2deg) translateX(-.6px)}100%{transform:rotate(1.2deg) translateX(.6px)}}
+#pathSvg{position:absolute;inset:0;width:480px;height:2500px;z-index:5;pointer-events:none}
+.node{position:absolute;width:94px;height:94px;transform:translate(-50%,-50%);z-index:20;cursor:pointer;user-select:none}
+.node .base{width:100%;height:100%;background-repeat:no-repeat;background-size:100% 100%;image-rendering:pixelated;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 7px 3px rgba(0,0,0,.38));transition:transform .16s ease}
+.node.current .base{animation:pulse 1.05s ease-in-out infinite}
+.node.locked .base{filter:drop-shadow(0 7px 3px rgba(0,0,0,.38)) grayscale(.7) brightness(.72)}
+.node:active .base{transform:scale(.9)}
+.node .num{font-size:31px;font-weight:900;color:var(--ink);line-height:1;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.node.locked .num{color:#5d5d5d;opacity:.88}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
-.stars{position:absolute;left:50%;top:-31px;transform:translateX(-50%);display:flex;gap:3px;z-index:12;pointer-events:none}
-.stars img{width:24px;height:24px;image-rendering:pixelated;filter:drop-shadow(0 2px 2px rgba(0,0,0,.42))}
-.lock{position:absolute;right:-4px;bottom:-4px;width:30px;height:30px;background:#6c5444;border:2px solid #4a3729;border-radius:7px 7px 11px 11px;z-index:13}
+.stars{position:absolute;left:50%;top:-31px;transform:translateX(-50%);display:flex;gap:3px;pointer-events:none;z-index:22}
+.stars img{width:23px;height:23px;image-rendering:pixelated;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
+.lock{position:absolute;right:-4px;bottom:-4px;width:29px;height:29px;background:#6c5444;border:2px solid #4a3729;border-radius:7px 7px 11px 11px;z-index:23}
 .lock:before{content:"";position:absolute;left:5px;top:-14px;width:14px;height:15px;border:3px solid #4a3729;border-bottom:0;border-radius:8px 8px 0 0}
-.catAttached{position:absolute;object-fit:contain;image-rendering:auto;pointer-events:none;z-index:14;width:88px;height:88px;transform:translate(-50%,-100%);filter:drop-shadow(0 5px 4px rgba(0,0,0,.30));transition:left 1s ease-in-out,top 1s ease-in-out}
-.catAttached.static{transition:none}.paw{position:absolute;width:14px;height:14px;border-radius:50%;background:rgba(74,55,41,.38);z-index:9;pointer-events:none}
-#nodeLayer{position:absolute;inset:0;z-index:10}
-#status{position:fixed;left:14px;bottom:14px;z-index:99;padding:8px 11px;background:rgba(22,31,25,.86);color:#f8edd1;border-radius:10px;font:600 12px/1.2 "Segoe UI",sans-serif;opacity:0;transition:opacity .2s}
-#status.show{opacity:1}@keyframes shake{0%,100%{transform:translate(-50%,-50%)}25%{transform:translate(-57%,-50%)}75%{transform:translate(-43%,-50%)}}
+.catAttached{position:absolute;width:76px;height:76px;object-fit:contain;image-rendering:auto;pointer-events:none;z-index:25;filter:drop-shadow(0 5px 4px rgba(0,0,0,.3));will-change:left,top,transform}
+.catAttached.player{width:84px;height:84px}
+.paw{position:absolute;width:13px;height:13px;border-radius:50%;background:rgba(74,55,41,.34);z-index:18;pointer-events:none}
+@keyframes shake{0%,100%{transform:translate(-50%,-50%)}25%{transform:translate(-57%,-50%)}75%{transform:translate(-43%,-50%)}}
 </style>
 </head>
 <body>
-<div id="frame"><div id="terrainLayer"></div><svg id="pathSvg" width="480" height="2480" viewBox="0 0 480 2480" aria-hidden="true"></svg><div id="nodeLayer"></div></div>
-<div id="status">Loading Tiled maps…</div>
+<div id="frame">
+  <div id="terrainLayer"></div>
+  <svg id="pathSvg" viewBox="0 0 480 2500" aria-hidden="true"></svg>
+  <div id="nodeLayer"></div>
+</div>
+
 <script>
 const ASSETS={
-starFull:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAANCAYAAACZ3F9/AAABDklEQVR4nHWQP0sDQRDFfwn5AnbWgvhRDu7KxJSp0viv0Co5sNGQUkGWs8kniGkVr0yXKkhIp01sTtJccQemWwuZvV29HVh4w+ybN++Bp4Iw0kEYad/cSyrKTBdl5iW37M+CZ9MJ49NzgzvdvpmlL8+NWoWizPSw19bbzUBvNwM97LWdmQg0gjDStgJArC4A+M5f2eUFj3df1SxRdLr96lSAy9vDqmkescufADi52gdwFjQBlusVcaK4v343SvnHCIC9g2NDihPFcr1yU5wvUuPv8+3MeeJzvkiNx5aVlJ5NJ2aZnCVnAoxvHkyqjkebFCfq97MVml0OUbwKBv71tSVexcvf3qsoXi1MTQ/AD5tYxAhIjIj4AAAAAElFTkSuQmCC",
-starEmpty:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAANCAYAAACZ3F9/AAAA/klEQVR4nH1SoY7CQBSckv4KuU9p0speTladIofA0U0wQCq5hGyK4QsItg0rcSgEwYE5VYKpaJM7905wb9keXZ6aybzJzL4sYBnPD8jzA7LpVlNVF1TVhdXsmsuM16slkt6Hxq9v71pTeea0JlR1QXEU0vVrSHEUUhyFDY0DXM8PyEwAACH7f+gEAA2NG+iqADCYdO+k8/L0Dh0A2B8PEKnE5+iW8F1uUJ6nD8sildgfDzejyjMnGc8b5p+yspqS8RwqzxzXuBStV0u9uJhdHsxs0lX/z2J2gUglRCqtb2wch+sy5oombx3PD2i7U7TdKeIvZ3JrIr/VwGjhAIBfJTqn+gTLlQAAAAAASUVORK5CYII=",
-btnLocked:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAABB0lEQVR4nO3YPQoCMRAF4FnxFhY23sdKLPw5gL2lyLLl9jmAq4VYeRWFBSGFFkFPYGMRG11EkWUmgVF4H2w5ybxsmgwRAAAAgFgiLUzzzMdsZD6diXppSorSPPODXpfarY6k/MPJWSIiLw3BkuaZt8edv92uUT973HnJX2Ulfj/5x8kFe11vtdmyrlMjZLNYnmtJriQ7wK9BAG0IoA0BtCGANgTQhgDaEEAbAmhjBSj3h6DX0zevr7xyf2DVsqcS7nKuNo0Z4uRstTaH6Aq5yzn6m1jSPJFgsNUfD/1kMhJtVseYgtaLJasn9h9YL5aJMQW3rJakeaKA0WJ/PIw6WpQ0DwAA8Pfuz9qru3xRgycAAAAASUVORK5CYII=",
-btnForest:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAABD0lEQVR4nO3YPQ6CQBAF4Keho7CjovQImhgLbmBLYkHjCWg5gS0nsKEwofUGFsQEjkBJTKCzoMaW+BMz4yaryfv6gfey2+wARERERGoT7WCebAeTQcL9UZXF0QzlyXYIwg1cz9eMP+m7BjkwaEpMpQOmwwOA6/kIwo3qVEWNH8P3XSP930vj753zk+g6iU/AdPjxtzSnKi7wa1jANhawjQVsYwHbWMA2FrCNBWxjAdtEBa6t89Xr6Z3xK+/ayvYM4q1EXRaYL9dwPd9oib5rUJeFeE51heqyMP4m1oQHFIutdBcNi9VM9bNPqssN8SETZRKfQHzIJtXlJh37SBMe+GK1mO4io6tFTXgiIqK/dwfXHVgTEIMBSwAAAABJRU5ErkJggg==",
-btnDesert:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAA6klEQVR4nO3YLQ6DQBAF4KGpr8AQBIQ7VPQkTRAYToDlBLWcAINowkkQ3KEBQaio4ARbUUP6I2Z2m2nS9/nZfS+jdokAAAAAxDzpYFumxmWQ4+ksyiIaasvUhIlPQRxJxl/Mw0jT5SYqseEOuA5PRBTEEYWJL9oqq/Fz+HkYufe9tT6Puwn2BlyHX58l2Sq7wK9BAW0ooA0FtKGANhTQhgLaUEDbfxWYrttv5RDfwd6AzevpE5tXHvsXoMozsz/snBYgeoTvu4WKumFlYm+gqBuv7xbnb2JJeCKLj60qz5x+bEnCAwAAAFi6A/zyTNY1yjlRAAAAAElFTkSuQmCC"
+  starFull:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAANCAYAAACZ3F9/AAABDklEQVR4nHWQP0sDQRDFfwn5AnbWgvhRDu7KxJSp0viv0Co5sNGQUkGWs8kniGkVr0yXKkhIp01sTtJccQemWwuZvV29HVh4w+ybN++Bp4Iw0kEYad/cSyrKTBdl5iW37M+CZ9MJ49NzgzvdvpmlL8+NWoWizPSw19bbzUBvNwM97LWdmQg0gjDStgJArC4A+M5f2eUFj3df1SxRdLr96lSAy9vDqmkescufADi52gdwFjQBlusVcaK4v343SvnHCIC9g2NDihPFcr1yU5wvUuPv8+3MeeJzvkiNx5aVlJ5NJ2aZnCVnAoxvHkyqjkebFCfq97MVml0OUbwKBv71tSVexcvf3qsoXi1MTQ/AD5tYxAhIjIj4AAAAAElFTkSuQmCC",
+  starEmpty:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAANCAYAAACZ3F9/AAAA/klEQVR4nH1SoY7CQBSckv4KuU9p0speTladIofA0U0wQCq5hGyK4QsItg0rcSgEwYE5VYKpaJM7905wb9keXZ6aybzJzL4sYBnPD8jzA7LpVlNVF1TVhdXsmsuM16slkt6Hxq9v71pTeea0JlR1QXEU0vVrSHEUUhyFDY0DXM8PyEwAACH7f+gEAA2NG+iqADCYdO+k8/L0Dh0A2B8PEKnE5+iW8F1uUJ6nD8sildgfDzejyjMnGc8b5p+yspqS8RwqzxzXuBStV0u9uJhdHsxs0lX/z2J2gUglRCqtb2wch+sy5oombx3PD2i7U7TdKeIvZ3JrIr/VwGjhAIBfJTqn+gTLlQAAAAAASUVORK5CYII=",
+  btnLocked:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAABB0lEQVR4nO3YPQoCMRAF4FnxFhY23sdKLPw5gL2lyLLl9jmAq4VYeRWFBSGFFkFPYGMRG11EkWUmgVF4H2w5ybxsmgwRAAAAgFgiLUzzzMdsZD6diXppSorSPPODXpfarY6k/MPJWSIiLw3BkuaZt8edv92uUT973HnJX2Ulfj/5x8kFe11vtdmyrlMjZLNYnmtJriQ7wK9BAG0IoA0BtCGANgTQhgDaEEAbAmhjBSj3h6DX0zevr7xyf2DVsqcS7nKuNo0Z4uRstTaH6Aq5yzn6m1jSPJFgsNUfD/1kMhJtVseYgtaLJasn9h9YL5aJMQW3rJakeaKA0WJ/PIw6WpQ0DwAA8Pfuz9qru3xRgycAAAAASUVORK5CYII=",
+  btnForest:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAABD0lEQVR4nO3YPQ6CQBAF4Keho7CjovQImhgLbmBLYkHjCWg5gS0nsKEwofUGFsQEjkBJTKCzoMaW+BMz4yaryfv6gfey2+wARERERGoT7WCebAeTQcL9UZXF0QzlyXYIwg1cz9eMP+m7BjkwaEpMpQOmwwOA6/kIwo3qVEWNH8P3XSP930vj753zk+g6iU/AdPjxtzSnKi7wa1jANhawjQVsYwHbWMA2FrCNBWxjAdtEBa6t89Xr6Z3xK+/ayvYM4q1EXRaYL9dwPd9oib5rUJeFeE51heqyMP4m1oQHFIutdBcNi9VM9bNPqssN8SETZRKfQHzIJtXlJh37SBMe+GK1mO4io6tFTXgiIqK/dwfXHVgTEIMBSwAAAABJRU5ErkJggg==",
+  btnDesert:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAA6klEQVR4nO3YLQ6DQBAF4KGpr8AQBIQ7VPQkTRAYToDlBLWcAINowkkQ3KEBQaio4ARbUUP6I2Z2m2nS9/nZfS+jdokAAAAAxDzpYFumxmWQ4+ksyiIaasvUhIlPQRxJxl/Mw0jT5SYqseEOuA5PRBTEEYWJL9oqq/Fz+HkYufe9tT6Puwn2BlyHX58l2Sq7wK9BAW0ooA0FtKGANtQhgLaUEDbfxWYrttv5RDfwd6AzevpE5tXHvsXoMozsz/snBYgeoTvu4WKumFlYm+gqBuv7xbnb2JJeCKLj60qz5x+bEnCAwAAAFi6A/zyTNY1yjlRAAAAAElFTkSuQmCC"
 };
 const PACK_ASSETS=Object.freeze({
-ancientTerrain:"assets_extracted/EPICRPGWorldPack-[FREEDemo]AncientRuins/EPIC RPG World Pack - [FREE Demo]Ancient Ruins - Copia/TiledMap Editor/../Tilesets/Tileset-Terrain2.png",
-grassSheet:"assets_extracted/EPICRPGWorldPack-[FREEDemo]GrassLand2.0/EPIC RPG World Pack - [FREE Demo]Grass Land 2.0-REWORK/TiledMap Editor/../Tilesets and props/Tilesets and props Demo.png"
+  grassSheet:"assets_extracted/EPICRPGWorldPack-[FREEDemo]GrassLand2.0/EPIC RPG World Pack - [FREE Demo]Grass Land 2.0-REWORK/TiledMap Editor/../Tilesets and props/Tilesets and props Demo.png",
+  ancientTerrain:"assets_extracted/EPICRPGWorldPack-[FREEDemo]AncientRuins/EPIC RPG World Pack - [FREE Demo]Ancient Ruins - Copia/TiledMap Editor/../Tilesets/Tileset-Terrain2.png"
 });
-const ATTACHED_CATS=Object.freeze([
-"attached_cats/animation-3.gif",
-"attached_cats/animation-1-0_5x.gif",
-"attached_cats/animation-5.gif",
-"attached_cats/animation-2.gif"
-]);
+const ATTACHED_CATS=[
+  "attached_cats/animation-3.gif",
+  "attached_cats/animation-1-0_5x.gif",
+  "attached_cats/animation-5.gif",
+  "attached_cats/animation-2.gif"
+];
 const BASE=new URL("./",location.href);
 const GRASS_TMX="assets_extracted/EPICRPGWorldPack-[FREEDemo]GrassLand2.0/EPIC RPG World Pack - [FREE Demo]Grass Land 2.0-REWORK/TiledMap Editor/sample map demo.tmx";
 const ANCIENT_TMX="assets_extracted/EPICRPGWorldPack-[FREEDemo]AncientRuins/EPIC RPG World Pack - [FREE Demo]Ancient Ruins - Copia/TiledMap Editor/TiledMap Editor Example Demo- Ancient Ruins.tmx";
-const FRAME_W=480,ZONE_H=620,TOTAL_H=2480,N=15,TOP_PAD=80,SPACING=160,AMP=150,CENTER=FRAME_W/2;
-const nodes=[];for(let i=0;i<N;i++){const y=TOP_PAD+i*SPACING;const x=CENTER+AMP*Math.sin(i*Math.PI/2.15);nodes.push({i,x,y,biome:i<7?"grass":"ruins"})}
-const nodeLayer=document.getElementById("nodeLayer"),terrainLayer=document.getElementById("terrainLayer"),status=document.getElementById("status"),frame=document.getElementById("frame");
-let current=0;const completed=Array(N).fill(false),starsArr=Array(N).fill(0);
-function showStatus(msg){status.textContent=msg;status.classList.add("show");clearTimeout(showStatus.t);showStatus.t=setTimeout(()=>status.classList.remove("show"),1800)}
-function abs(rel){return new URL(rel,BASE).href}
-async function fetchText(rel){const r=await fetch(abs(rel));if(!r.ok)throw new Error("HTTP "+r.status+" for "+rel);return r.text()}
-function loadImage(src){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>rej(new Error("Image failed: "+src));im.src=src})}
-function numAttr(el,name,fallback=0){const v=el.getAttribute(name);return v==null?fallback:Number(v)}
-async function loadTileset(tsxUrl){
-  const response=await fetch(tsxUrl);if(!response.ok)throw new Error("HTTP "+response.status+" for "+tsxUrl);
-  const xml=new DOMParser().parseFromString(await response.text(),"application/xml"),root=xml.documentElement,imageEl=root.querySelector("image");
-  const image=await loadImage(new URL(imageEl.getAttribute("source"),tsxUrl).href),tw=numAttr(root,"tilewidth",32),th=numAttr(root,"tileheight",32),cols=numAttr(root,"columns",Math.floor(image.naturalWidth/tw)||1),animations={};
-  for(const tile of Array.from(root.getElementsByTagName("tile"))){const anim=tile.getElementsByTagName("animation")[0];if(!anim)continue;animations[numAttr(tile,"id",0)]=Array.from(anim.getElementsByTagName("frame")).map(fr=>({tileid:numAttr(fr,"tileid",0),duration:numAttr(fr,"duration",100)}))}
-  return{image,tw,th,cols,animations}
+const FRAME_W=480,MAP_GRASS_H=320,MAP_ANCIENT_H=480,TOTAL_H=2500,N=15,TOP_PAD=90,SPACING=160,AMP=155,CENTER=FRAME_W/2,TRANSITION_Y=840;
+
+const frame=document.getElementById("frame");
+const terrainLayer=document.getElementById("terrainLayer");
+const nodeLayer=document.getElementById("nodeLayer");
+let current=0;
+const completed=Array(N).fill(false),starsArr=Array(N).fill(0);
+const nodes=[];
+for(let i=0;i<N;i++){
+  const y=TOP_PAD+i*SPACING;
+  const x=CENTER+AMP*Math.sin(i*Math.PI/2.45);
+  nodes.push({i,x,y,biome:y<TRANSITION_Y?"grass":"ruins"});
 }
+
+function abs(rel){return new URL(rel,BASE).href}
+async function fetchText(url){const r=await fetch(url);if(!r.ok)throw new Error("HTTP "+r.status);return r.text()}
+function loadImage(src){return new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>rej(new Error("Image failed"));im.src=src})}
+function numAttr(el,name,fallback=0){const v=el.getAttribute(name);return v==null?fallback:Number(v)}
+
+async function loadTileset(tsxUrl){
+  const root=new DOMParser().parseFromString(await fetchText(tsxUrl),"application/xml").documentElement;
+  const imageEl=root.querySelector("image");
+  const image=await loadImage(new URL(imageEl.getAttribute("source"),tsxUrl).href);
+  const tw=numAttr(root,"tilewidth",32),th=numAttr(root,"tileheight",32),cols=numAttr(root,"columns",Math.floor(image.naturalWidth/tw)||1);
+  const animations={};
+  for(const tile of Array.from(root.getElementsByTagName("tile"))){
+    const anim=tile.getElementsByTagName("animation")[0];if(!anim)continue;
+    animations[numAttr(tile,"id",0)]=Array.from(anim.getElementsByTagName("frame")).map(fr=>({tileid:numAttr(fr,"tileid",0),duration:numAttr(fr,"duration",100)}));
+  }
+  return{image,tw,th,cols,animations};
+}
+
 async function loadTmx(tmxRel){
-  const xml=new DOMParser().parseFromString(await fetchText(tmxRel),"application/xml"),root=xml.documentElement,mapW=numAttr(root,"width"),mapH=numAttr(root,"height"),tw=numAttr(root,"tilewidth",32),th=numAttr(root,"tileheight",32),tilesets=[];
+  const mapUrl=new URL(tmxRel,BASE),root=new DOMParser().parseFromString(await fetchText(mapUrl.href),"application/xml").documentElement;
+  const mapW=numAttr(root,"width"),mapH=numAttr(root,"height"),tw=numAttr(root,"tilewidth",32),th=numAttr(root,"tileheight",32);
+  const tilesets=[];
   for(const el of Array.from(root.children).filter(e=>e.tagName==="tileset")){
     const firstgid=numAttr(el,"firstgid",1),source=el.getAttribute("source");
-    const mapUrl=new URL(tmxRel,BASE),tsxUrl=new URL(source,mapUrl).href;
-    tilesets.push({firstgid,...await loadTileset(tsxUrl)})
+    if(!source)continue;
+    const tsxUrl=new URL(source,mapUrl).href;
+    tilesets.push({firstgid,...await loadTileset(tsxUrl)});
   }
   tilesets.sort((a,b)=>a.firstgid-b.firstgid);
   const layers=Array.from(root.children).filter(e=>e.tagName==="layer").map(layer=>{
-    const data=layer.getElementsByTagName("data")[0],gids=(data?.textContent||"").trim().split(",").map(v=>Number(v.trim())).filter(v=>Number.isFinite(v));
+    const data=layer.getElementsByTagName("data")[0];
+    const gids=(data?.textContent||"").trim().split(",").map(v=>Number(v.trim())).filter(v=>Number.isFinite(v));
     return{name:layer.getAttribute("name")||"",visible:layer.getAttribute("visible")!=="0",gids,width:numAttr(layer,"width",mapW),height:numAttr(layer,"height",mapH)}
   }).filter(l=>l.visible&&l.gids.length);
-  return{mapW,mapH,tw,th,tilesets,layers}
+  return{mapW,mapH,tw,th,tilesets,layers};
 }
+
 function findTileset(map,gid){let hit=null;for(const ts of map.tilesets){if(gid>=ts.firstgid)hit=ts;else break}return hit}
-function animatedLocal(ts,local,clock){const frames=ts.animations[local];if(!frames?.length)return local;const total=frames.reduce((s,f)=>s+f.duration,0)||100;let t=clock%total;for(const fr of frames){if(t<fr.duration)return fr.tileid;t-=fr.duration}return frames[frames.length-1].tileid}
-function renderTmx(map,canvas,clock){
-  const w=map.mapW*map.tw,h=map.mapH*map.th;if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
+function frameTile(ts,local,clock){
+  const a=ts.animations[local];if(!a?.length)return local;
+  const total=a.reduce((s,f)=>s+f.duration,0)||100;let t=clock%total;
+  for(const f of a){if(t<f.duration)return f.tileid;t-=f.duration}
+  return a[a.length-1].tileid;
+}
+function drawLayer(map,layer,canvas,clock,clip){
+  const w=map.mapW*map.tw,h=map.mapH*map.th;
+  canvas.width=w;canvas.height=h;
   const ctx=canvas.getContext("2d");ctx.clearRect(0,0,w,h);ctx.imageSmoothingEnabled=false;
-  for(const layer of map.layers){for(let i=0;i<layer.gids.length;i++){const raw=layer.gids[i]>>>0;if(!raw)continue;const gid=raw&0x1fffffff,ts=findTileset(map,gid);if(!ts)continue;const local=animatedLocal(ts,gid-ts.firstgid,clock),sx=(local%ts.cols)*ts.tw,sy=Math.floor(local/ts.cols)*ts.th,x=(i%layer.width)*map.tw,y=Math.floor(i/layer.width)*map.th;ctx.drawImage(ts.image,sx,sy,ts.tw,ts.th,x,y,ts.tw,ts.th)}}
-  return canvas
+  for(let i=0;i<layer.gids.length;i++){
+    const raw=layer.gids[i]>>>0;if(!raw)continue;
+    const gid=raw&0x1fffffff,ts=findTileset(map,gid);if(!ts)continue;
+    const local=frameTile(ts,gid-ts.firstgid,clock);
+    if(clip && !clip.has(i))continue;
+    const sx=(local%ts.cols)*ts.tw,sy=Math.floor(local/ts.cols)*ts.th;
+    const x=(i%layer.width)*map.tw,y=Math.floor(i/layer.width)*map.th;
+    ctx.drawImage(ts.image,sx,sy,ts.tw,ts.th,x,y,ts.tw,ts.th)
+  }
 }
-function addMapZone(srcCanvas,y,cropX,label){
-  const zone=document.createElement("div");zone.className="mapZone";zone.style.top=y+"px";
-  const canvas=document.createElement("canvas");canvas.width=FRAME_W;canvas.height=ZONE_H;zone.appendChild(canvas);
-  const tag=document.createElement("div");tag.className="biomeTag";tag.textContent=label;zone.appendChild(tag);terrainLayer.appendChild(zone);
-  const paint=()=>{const ctx=canvas.getContext("2d");ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,FRAME_W,ZONE_H);ctx.drawImage(srcCanvas,cropX,10,FRAME_W,ZONE_H,0,0,FRAME_W,ZONE_H)};
-  return{paint}
+function renderComposite(map,canvas,clock,excludeNames){
+  const w=map.mapW*map.tw,h=map.mapH*map.th;canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext("2d");ctx.clearRect(0,0,w,h);ctx.imageSmoothingEnabled=false;
+  const tmp=document.createElement("canvas");
+  for(const layer of map.layers){
+    if(excludeNames.has(layer.name))continue;
+    drawLayer(map,layer,tmp,clock);
+    ctx.drawImage(tmp,0,0)
+  }
 }
-function addTransition(y){const d=document.createElement("div");d.className="transitionBand";d.style.top=y+"px";terrainLayer.appendChild(d)}
-function routePath(pts){let d=`M ${pts[0].x} ${pts[0].y} `;for(let i=0;i<pts.length-1;i++){const p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2,c1x=p1.x+(p2.x-p0.x)/6,c1y=p1.y+(p2.y-p0.y)/6,c2x=p2.x-(p3.x-p1.x)/6,c2y=p2.y-(p3.y-p1.y)/6;d+=`C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2.x} ${p2.y} `}return d}
-function buildRoute(){
-  const svg=document.getElementById("pathSvg"),defs=document.createElementNS("http://www.w3.org/2000/svg","defs");
-  defs.innerHTML=`<pattern id="grassDirt" patternUnits="userSpaceOnUse" width="32" height="32"><image href="${abs(PACK_ASSETS.grassSheet)}" x="-64" y="-416" width="832" height="672" preserveAspectRatio="none"></image></pattern><pattern id="ruinsStone" patternUnits="userSpaceOnUse" width="32" height="32"><image href="${abs(PACK_ASSETS.ancientTerrain)}" x="-640" y="-320" width="1152" height="448" preserveAspectRatio="none"></image></pattern>`;
-  svg.appendChild(defs);const d=routePath(nodes),shadow=document.createElementNS("http://www.w3.org/2000/svg","path");shadow.setAttribute("d",d);shadow.setAttribute("fill","none");shadow.setAttribute("stroke","rgba(0,0,0,.20)");shadow.setAttribute("stroke-width","40");shadow.setAttribute("stroke-linecap","round");shadow.setAttribute("transform","translate(0,5)");svg.appendChild(shadow);
-  const a=document.createElementNS("http://www.w3.org/2000/svg","path");a.setAttribute("d",routePath(nodes.slice(0,8)));a.setAttribute("fill","none");a.setAttribute("stroke","url(#grassDirt)");a.setAttribute("stroke-width","32");a.setAttribute("stroke-linecap","round");svg.appendChild(a);
-  const b=document.createElementNS("http://www.w3.org/2000/svg","path");b.setAttribute("d",routePath(nodes.slice(7)));b.setAttribute("fill","none");b.setAttribute("stroke","url(#ruinsStone)");b.setAttribute("stroke-width","32");b.setAttribute("stroke-linecap","round");svg.appendChild(b)
+function componentsForLayers(map,layerNames){
+  const out=[];
+  for(const layer of map.layers){
+    if(!layerNames.has(layer.name))continue;
+    const occupied=new Set();
+    for(let i=0;i<layer.gids.length;i++){if(layer.gids[i])occupied.add(i)}
+    while(occupied.size){
+      const start=occupied.values().next().value;
+      const q=[start],cells=[];occupied.delete(start);
+      while(q.length){
+        const i=q.pop();cells.push(i);
+        const x=i%layer.width,y=Math.floor(i/layer.width);
+        for(const ni of [i-1,i+1,i-layer.width,i+layer.width]){
+          if(!occupied.has(ni))continue;
+          const nx=ni%layer.width,ny=Math.floor(ni/layer.width);
+          if(Math.abs(nx-x)+Math.abs(ny-y)===1){occupied.delete(ni);q.push(ni)}
+        }
+      }
+      let minX=layer.width,minY=layer.height,maxX=0,maxY=0;
+      for(const i of cells){const x=i%layer.width,y=Math.floor(i/layer.width);minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y)}
+      const bw=maxX-minX+1,bh=maxY-minY+1;
+      if(bw<=9&&bh<=9&&cells.length>=2)out.push({layer,cells,minX,minY,maxX,maxY,bw,bh})
+    }
+  }
+  return out;
 }
-function btnForBiome(b){return b==="ruins"?ASSETS.btnDesert:ASSETS.btnForest}
-function placeCat(idx,animate=true){const n=nodes[idx],side=idx%2===0?-1:1;attachedPlayerCat.style.left=(n.x+side*56)+"px";attachedPlayerCat.style.top=(n.y+12)+"px";attachedPlayerCat.style.transform=side<0?"translate(-50%,-100%)":"translate(-50%,-100%) scaleX(-1)";attachedPlayerCat.classList.toggle("static",!animate)}
-function spawnPaws(x,y){for(let k=0;k<5;k++){const p=document.createElement("div");p.className="paw";p.style.left=(x-22+k*9)+"px";p.style.top=(y-18-(k%2)*8)+"px";p.style.opacity="1";frame.appendChild(p);let op=1;const iv=setInterval(()=>{op-=.08;p.style.opacity=String(op);if(op<=0){clearInterval(iv);p.remove()}},40)}}
-function renderNodes(){
-  nodeLayer.innerHTML="";nodes.forEach((n,idx)=>{const unlocked=idx===0||completed[idx-1]||completed[idx],el=document.createElement("div");el.className="node"+(unlocked?"":" locked")+(idx===current?" current":"");el.style.left=n.x+"px";el.style.top=n.y+"px";
-  const base=document.createElement("div");base.className="base";base.style.backgroundImage=`url('${unlocked?btnForBiome(n.biome):ASSETS.btnLocked}')`;const num=document.createElement("span");num.className="num";num.textContent=idx+1;base.appendChild(num);el.appendChild(base);
-  if(completed[idx]){const stars=document.createElement("div");stars.className="stars";for(let s=0;s<3;s++){const img=document.createElement("img");img.src=s<starsArr[idx]?ASSETS.starFull:ASSETS.starEmpty;stars.appendChild(img)}el.appendChild(stars)}
+function addMapSection(map,y,scale,flip,fade){
+  const zone=document.createElement("div");zone.className="mapZone"+(fade==="in"?" fadeIn":"")+(fade==="out"?" fadeOut":"");zone.style.top=y+"px";zone.style.height=(map.mapH*map.th*scale)+"px";terrainLayer.appendChild(zone);
+  const base=document.createElement("canvas");base.className="mapCanvas";base.width=map.mapW*map.tw;base.height=map.mapH*map.th;
+  base.style.width=(base.width*scale)+"px";base.style.height=(base.height*scale)+"px";base.style.transform=flip?"scaleX(-1)":"";base.style.transformOrigin="center";zone.appendChild(base);
+  const propHost=document.createElement("div");propHost.style.position="absolute";propHost.style.inset="0";propHost.style.transform=flip?"scaleX(-1)":"";propHost.style.transformOrigin="center";zone.appendChild(propHost);
+  return{zone,base,propHost,scale,map,flip}
+}
+function addAnimatedProps(section,components){
+  for(const c of components){
+    const cv=document.createElement("canvas");cv.className="mapProp";cv.width=c.bw*section.map.tw;cv.height=c.bh*section.map.th;
+    cv.style.left=(c.minX*section.map.tw*section.scale)+"px";cv.style.top=(c.minY*section.map.th*section.scale)+"px";
+    cv.style.width=(cv.width*section.scale)+"px";cv.style.height=(cv.height*section.scale)+"px";
+    cv.style.setProperty("--dur",(3.8+Math.random()*1.8).toFixed(2)+"s");cv.style.setProperty("--delay",(-Math.random()*2.8).toFixed(2)+"s");cv.classList.add("sway");
+    drawLayer(section.map,c.layer,cv,0,new Set(c.cells));section.propHost.appendChild(cv);c.canvas=cv
+  }
+}
+function refreshSection(section,clock){
+  renderComposite(section.map,section.base,clock,new Set(["Tile Layer 4","Tile Layer 5","Tile Layer 6"]));
+  for(const c of section.map.__animatedComponents||[])drawLayer(section.map,c.layer,c.canvas,clock,new Set(c.cells));
+}
+function createNodeImage(unlocked,node){
+  const el=document.createElement("div");el.className="node"+(unlocked?"":" locked")+(node.i===current?" current":"");el.style.left=node.x+"px";el.style.top=node.y+"px";
+  const b=document.createElement("div");b.className="base";b.style.backgroundImage="url('"+(unlocked?(node.biome==="ruins"?ASSETS.btnDesert:ASSETS.btnForest):ASSETS.btnLocked)+"')";
+  const n=document.createElement("span");n.className="num";n.textContent=String(node.i+1);b.appendChild(n);el.appendChild(b);
+  if(completed[node.i]){const stars=document.createElement("div");stars.className="stars";for(let s=0;s<3;s++){const im=document.createElement("img");im.src=s<starsArr[node.i]?ASSETS.starFull:ASSETS.starEmpty;stars.appendChild(im)}el.appendChild(stars)}
   if(!unlocked){const lk=document.createElement("div");lk.className="lock";el.appendChild(lk)}
-  el.addEventListener("click",()=>{if(!unlocked){el.style.animation="shake .26s ease";setTimeout(()=>el.style.animation="",280);return}current=idx;if(!completed[idx]){completed[idx]=true;starsArr[idx]=1+Math.floor(Math.random()*3);spawnPaws(n.x,n.y)}placeCat(idx,true);renderNodes()});nodeLayer.appendChild(el)});placeCat(current,false)
+  return el;
 }
-const attachedPlayerCat=document.createElement("img");attachedPlayerCat.className="catAttached";attachedPlayerCat.src=ATTACHED_CATS[0];attachedPlayerCat.alt="";frame.appendChild(attachedPlayerCat);
-[[4,1],[8,-1],[12,1]].forEach(([nodeIndex,dir],i)=>{const im=document.createElement("img");im.className="catAttached static";im.src=ATTACHED_CATS[i+1];im.alt="";const n=nodes[nodeIndex];im.style.left=(n.x+dir*58)+"px";im.style.top=(n.y+10)+"px";im.style.transform=dir<0?"translate(-50%,-100%)":"translate(-50%,-100%) scaleX(-1)";frame.appendChild(im)});
+function renderNodes(){
+  nodeLayer.innerHTML="";
+  nodes.forEach((node,idx)=>{
+    const unlocked=idx===0||completed[idx-1]||completed[idx],el=createNodeImage(unlocked,node);
+    el.addEventListener("click",()=>{
+      if(!unlocked){el.style.animation="shake .26s ease";setTimeout(()=>el.style.animation="",280);return}
+      current=idx;
+      if(!completed[idx]){completed[idx]=true;starsArr[idx]=1+Math.floor(Math.random()*3);spawnPaws(node.x,node.y)}
+      renderNodes()
+    });
+    nodeLayer.appendChild(el)
+  })
+}
+function spawnPaws(x,y){
+  for(let k=0;k<5;k++){const p=document.createElement("div");p.className="paw";p.style.left=(x-22+k*9)+"px";p.style.top=(y-18-(k%2)*8)+"px";frame.appendChild(p);let o=1;const iv=setInterval(()=>{o-=.08;p.style.opacity=o;if(o<=0){clearInterval(iv);p.remove()}},40)}
+}
+
+function routePath(pts){
+  let d="M "+pts[0].x+" "+pts[0].y+" ";
+  for(let i=0;i<pts.length-1;i++){
+    const p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2;
+    const c1x=p1.x+(p2.x-p0.x)/6,c1y=p1.y+(p2.y-p0.y)/6,c2x=p2.x-(p3.x-p1.x)/6,c2y=p2.y-(p3.y-p1.y)/6;
+    d+="C "+c1x+" "+c1y+", "+c2x+" "+c2y+", "+p2.x+" "+p2.y+" ";
+  }
+  return d
+}
+function pathStroke(d,stroke,width){
+  const p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d",d);p.setAttribute("fill","none");p.setAttribute("stroke",stroke);p.setAttribute("stroke-width",width);p.setAttribute("stroke-linecap","round");return p
+}
+function buildRoute(){
+  const svg=document.getElementById("pathSvg");
+  const defs=document.createElementNS("http://www.w3.org/2000/svg","defs");
+  defs.innerHTML='<pattern id="grassDirt" patternUnits="userSpaceOnUse" width="32" height="32"><image href="'+abs(PACK_ASSETS.grassSheet)+'" x="-320" y="-416" width="832" height="672" preserveAspectRatio="none"></image></pattern><pattern id="ruinsStone" patternUnits="userSpaceOnUse" width="32" height="32"><image href="'+abs(PACK_ASSETS.ancientTerrain)+'" x="-608" y="-288" width="1152" height="448" preserveAspectRatio="none"></image></pattern>';
+  svg.appendChild(defs);
+  const d=routePath(nodes);
+  svg.appendChild(pathStroke(d,"rgba(0,0,0,.20)",43)).setAttribute("transform","translate(0,6)");
+  const grass=routePath(nodes.slice(0,6));svg.appendChild(pathStroke(grass,"url(#grassDirt)",34));
+  const cross=routePath(nodes.slice(5,10));const p1=pathStroke(cross,"url(#grassDirt)",34);p1.setAttribute("opacity",".7");svg.appendChild(p1);
+  const p2=pathStroke(routePath(nodes.slice(5,10)),"url(#ruinsStone)",34);p2.setAttribute("opacity",".45");svg.appendChild(p2);
+  const ruins=routePath(nodes.slice(7));svg.appendChild(pathStroke(ruins,"url(#ruinsStone)",34));
+}
+function routePoint(t){
+  const n=nodes.length-1;const seg=Math.min(n-1,Math.floor(t*n)),local=t*n-seg;
+  const a=nodes[seg],b=nodes[seg+1];
+  const p0=nodes[Math.max(0,seg-1)],p3=nodes[Math.min(n,seg+2)];
+  const tt=local,tt2=tt*tt,tt3=tt2*tt;
+  return{
+    x:.5*(2*a.x+(-p0.x+b.x)*tt+(2*p0.x-5*a.x+4*b.x-p3.x)*tt2+(-p0.x+3*a.x-3*b.x+p3.x)*tt3),
+    y:.5*(2*a.y+(-p0.y+b.y)*tt+(2*p0.y-5*a.y+4*b.y-p3.y)*tt2+(-p0.y+3*a.y-3*b.y+p3.y)*tt3)
+  }
+}
+function setupCats(){
+  const cats=ATTACHED_CATS.map((src,i)=>{
+    const im=document.createElement("img");im.className="catAttached"+(i===0?" player":"");im.src=src;im.alt="";frame.appendChild(im);return im
+  });
+  const start=performance.now();
+  function tick(now){
+    const sec=(now-start)/1000;
+    cats.forEach((im,i)=>{
+      let t=(sec*(0.014+i*0.003)+i*.22)%1;
+      if(i%2)t=1-t;
+      const p=routePoint(t);
+      const p2=routePoint(Math.min(.9999,t+.003));
+      const dir=p2.x-p.x;
+      const side=i%2===0?-1:1;
+      im.style.left=(p.x+side*43)+"px";
+      im.style.top=(p.y+6)+"px";
+      im.style.transform=dir<0?"translate(-50%,-100%) scaleX(-1)":"translate(-50%,-100%)";
+    });
+    requestAnimationFrame(tick)
+  }
+  requestAnimationFrame(tick)
+}
 
 (async function init(){
   try{
-    showStatus("Loading Grass Land 2.0 tilemap…");
-    const [grassMap,ruinsMap]=await Promise.all([loadTmx(GRASS_TMX),loadTmx(ANCIENT_TMX)]);
-    const grassCanvas=document.createElement("canvas"),ruinsCanvas=document.createElement("canvas");
-    renderTmx(grassMap,grassCanvas,0);renderTmx(ruinsMap,ruinsCanvas,0);
-    const zones=[addMapZone(grassCanvas,0,0,"GRASS LAND"),addMapZone(grassCanvas,ZONE_H,480,"GRASSLAND EDGE"),addMapZone(ruinsCanvas,ZONE_H*2,0,"ANCIENT RUINS"),addMapZone(ruinsCanvas,ZONE_H*3,160,"ANCIENT RUINS")];
-    addTransition(ZONE_H*2-43);zones.forEach(z=>z.paint());buildRoute();renderNodes();showStatus("Tiled world loaded");
-    let lastAnim=0;function tick(ts){if(ts-lastAnim>100){lastAnim=ts;renderTmx(grassMap,grassCanvas,ts);renderTmx(ruinsMap,ruinsCanvas,ts);zones.forEach(z=>z.paint())}requestAnimationFrame(tick)}requestAnimationFrame(tick)
-  }catch(err){console.error(err);showStatus("Map asset error — check GitHub Pages paths")}
+    const [grassMap,ancientMap]=await Promise.all([loadTmx(GRASS_TMX),loadTmx(ANCIENT_TMX)]);
+    grassMap.__animatedComponents=componentsForLayers(grassMap,new Set(["Tile Layer 4","Tile Layer 5","Tile Layer 6"]));
+    ancientMap.__animatedComponents=[];
+    const sections=[
+      addMapSection(grassMap,0,.5,false,"out"),
+      addMapSection(grassMap,320,.5,true,"out"),
+      addMapSection(grassMap,640,.5,false,"out"),
+      addMapSection(ancientMap,900,.75,false,"in"),
+      addMapSection(ancientMap,1380,.75,true,""),
+      addMapSection(ancientMap,1860,.75,false,"")
+    ];
+    addAnimatedProps(sections[0],grassMap.__animatedComponents);
+    addAnimatedProps(sections[1],grassMap.__animatedComponents);
+    addAnimatedProps(sections[2],grassMap.__animatedComponents);
+    buildRoute();renderNodes();setupCats();
+
+    let last=0;
+    function tick(ts){
+      if(ts-last>100){
+        last=ts;
+        sections.forEach(s=>refreshSection(s,ts));
+      }
+      requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  }catch(e){console.error(e)}
 })();
 </script>
 </body>
