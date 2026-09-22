@@ -7,102 +7,114 @@
 <style>
 :root{--ink:#4a3729}
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;background:#19251d}
+html,body{margin:0;padding:0;background:#172118}
 body{display:flex;justify-content:center}
 #frame{
-  position:relative;width:460px;max-width:100vw;min-height:2885px;overflow:hidden;
-  background:#6f9c57;box-shadow:0 0 54px rgba(0,0,0,.55);image-rendering:pixelated
+  position:relative;width:460px;max-width:100vw;min-height:2890px;overflow:hidden;
+  background:#78a859;image-rendering:pixelated;box-shadow:0 0 52px rgba(0,0,0,.5)
 }
 #terrainLayer,#decoLayer,#nodeLayer{position:absolute;inset:0}
-#terrainLayer{z-index:0}
-.terrain{
-  position:absolute;left:0;width:100%;background-position:center top;background-repeat:no-repeat;
-  background-size:100% 100%;image-rendering:pixelated
+#terrainLayer{z-index:0;background:url("crops/tile_grass_seamless.png") 0 0/260px 230px repeat}
+.ruinsGround{
+  position:absolute;left:0;right:0;top:885px;height:2005px;z-index:1;
+  background:url("crops/tile_sand_seamless.png") 0 0/240px 100px repeat;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.08) 4%,rgba(0,0,0,.25) 12%,#000 25%);
+  mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.08) 4%,rgba(0,0,0,.25) 12%,#000 25%)
 }
-.terrain.grass{top:0;height:1500px;background-image:url("crops/ground_forest_q.png")}
-.terrain.ruins{
-  top:1080px;height:1805px;background-image:url("crops/ground_desert_q.png");z-index:2;
-  -webkit-mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.06) 3%,rgba(0,0,0,.24) 11%,#000 22%);
-  mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.06) 3%,rgba(0,0,0,.24) 11%,#000 22%)
+.ruinsDetail{
+  position:absolute;left:0;right:0;top:900px;height:1320px;z-index:2;
+  background:url("crops/ground_desert_q.png") 0 0/460px 1280px no-repeat;
+  opacity:.72;pointer-events:none;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.25) 10%,#000 28%,rgba(0,0,0,.75) 78%,transparent 100%);
+  mask-image:linear-gradient(to bottom,transparent 0,rgba(0,0,0,.25) 10%,#000 28%,rgba(0,0,0,.75) 78%,transparent 100%)
 }
-.terrain.ruins::before{
-  content:"";position:absolute;left:0;right:0;top:0;height:360px;pointer-events:none;
-  background:linear-gradient(to bottom,rgba(112,153,82,.0),rgba(120,143,83,.15),rgba(112,128,78,.20),rgba(105,118,74,.0))
+.transition{
+  position:absolute;left:0;right:0;top:820px;height:260px;z-index:3;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(120,168,89,0),rgba(139,160,92,.10) 22%,rgba(166,152,96,.14) 48%,rgba(180,147,96,.08) 72%,rgba(180,147,96,0))
 }
 #decoLayer{z-index:4;pointer-events:none}
-.deco,.sprite8{
-  position:absolute;image-rendering:pixelated;pointer-events:none;
-  filter:drop-shadow(0 5px 4px rgba(0,0,0,.24))
+.deco{
+  position:absolute;pointer-events:none;image-rendering:pixelated;
+  filter:drop-shadow(0 5px 4px rgba(0,0,0,.25));transform-origin:50% 92%
 }
-.deco.sway{
-  transform-origin:50% 92%;
-  animation:sway 3.8s ease-in-out infinite alternate;
-  animation-delay:var(--delay,0s)
-}
+.deco.sway{animation:sway 3.8s ease-in-out infinite alternate;animation-delay:var(--delay,0s)}
 @keyframes sway{
-  0%{transform:rotate(-1.5deg) translateX(-.7px)}
-  100%{transform:rotate(1.5deg) translateX(.7px)}
+  0%{transform:rotate(-1.7deg) translateX(-.7px)}
+  100%{transform:rotate(1.7deg) translateX(.7px)}
 }
-.deco.sway.soft{animation-duration:4.6s}
-.sprite8{background-repeat:no-repeat}
-#pathSvg{position:absolute;left:0;top:0;width:460px;height:2885px;z-index:5;pointer-events:none}
+.animatedSprite{
+  position:absolute;pointer-events:none;image-rendering:pixelated;
+  background-repeat:no-repeat;filter:drop-shadow(0 4px 3px rgba(0,0,0,.22))
+}
+.pond{
+  position:absolute;border-radius:50%;overflow:hidden;border:5px solid #a98a5c;
+  box-shadow:inset 0 6px 13px rgba(0,0,0,.36),0 5px 6px rgba(0,0,0,.22);
+  pointer-events:none
+}
+.pondInner{
+  position:absolute;inset:-16px;background:url("crops/tile_water.png") 0 0/120px 26px repeat;
+  animation:water 5.4s linear infinite
+}
+@keyframes water{from{background-position:0 0}to{background-position:-240px 52px}}
+#pathSvg{position:absolute;left:0;top:0;width:460px;height:2890px;z-index:5;pointer-events:none}
 .node{
-  position:absolute;width:78px;height:78px;transform:translate(-50%,-50%);
-  z-index:20;cursor:pointer;user-select:none
+  position:absolute;width:82px;height:82px;transform:translate(-50%,-50%);
+  z-index:10;cursor:pointer;user-select:none
 }
 .node .base{
-  width:100%;height:100%;background-size:100% 100%;background-repeat:no-repeat;
+  width:100%;height:100%;background-repeat:no-repeat;background-size:100% 100%;
   image-rendering:pixelated;display:flex;align-items:center;justify-content:center;
   filter:drop-shadow(0 6px 3px rgba(0,0,0,.36));transition:transform .14s ease
 }
 .node.locked .base{filter:drop-shadow(0 6px 3px rgba(0,0,0,.36)) grayscale(.62) brightness(.76)}
-.node:active .base{transform:scale(.9)}
 .node.current .base{animation:pulse 1.08s ease-in-out infinite}
+.node:active .base{transform:scale(.9)}
 .node .num{
-  font:800 28px/1 "Trebuchet MS","Segoe UI",sans-serif;color:var(--ink);
+  font:800 29px/1 "Trebuchet MS","Segoe UI",sans-serif;color:var(--ink);
   text-shadow:0 1px 0 rgba(255,255,255,.55)
 }
-.node.locked .num{color:#5d5d5d}
+.node.locked .num{color:#5c5c5c}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 .stars{
   position:absolute;left:50%;top:-30px;transform:translateX(-50%);
-  display:flex;gap:2px;z-index:22
+  display:flex;gap:2px;z-index:12;pointer-events:none
 }
 .stars img{width:22px;height:22px;image-rendering:pixelated;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
 .lock{
-  position:absolute;right:-6px;bottom:-5px;width:26px;height:26px;
-  background:#6b5344;border:2px solid #4a3729;border-radius:6px 6px 10px 10px
+  position:absolute;right:-7px;bottom:-6px;width:27px;height:27px;
+  background:#6b5344;border:2px solid #4a3729;border-radius:6px 6px 10px 10px;z-index:13
 }
 .lock:before{
   content:"";position:absolute;left:5px;top:-13px;width:12px;height:14px;
   border:3px solid #4a3729;border-bottom:0;border-radius:8px 8px 0 0
 }
 .cat{
-  position:absolute;width:62px;height:62px;object-fit:contain;image-rendering:auto;
-  pointer-events:none;z-index:25;filter:drop-shadow(0 5px 4px rgba(0,0,0,.34));
+  position:absolute;width:64px;height:64px;object-fit:contain;image-rendering:auto;
+  pointer-events:none;z-index:15;filter:drop-shadow(0 5px 4px rgba(0,0,0,.34));
   will-change:left,top,transform
 }
-.cat.player{width:70px;height:70px}
+.cat.player{width:72px;height:72px}
 .paw{
   position:absolute;width:13px;height:13px;border-radius:50%;
-  background:rgba(74,55,41,.34);z-index:18;pointer-events:none
+  background:rgba(74,55,41,.34);z-index:9;pointer-events:none
 }
+.shake{animation:shake .34s}
 @keyframes shake{
   0%,100%{transform:translate(-50%,-50%) rotate(0)}
   25%{transform:translate(-50%,-50%) rotate(-7deg)}
   50%{transform:translate(-50%,-50%) rotate(7deg)}
   75%{transform:translate(-50%,-50%) rotate(-5deg)}
 }
-.shake{animation:shake .34s}
 </style>
 </head>
 <body>
 <div id="frame">
   <div id="terrainLayer">
-    <div class="terrain grass"></div>
-    <div class="terrain ruins"></div>
+    <div class="ruinsGround"></div>
+    <div class="ruinsDetail"></div>
+    <div class="transition"></div>
   </div>
-  <svg id="pathSvg" aria-hidden="true"></svg>
+  <svg id="pathSvg" viewBox="0 0 460 2890" aria-hidden="true"></svg>
   <div id="decoLayer"></div>
   <div id="nodeLayer"></div>
 </div>
@@ -115,23 +127,17 @@ const ASSETS={
   btnForest:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAABD0lEQVR4nO3YPQ6CQBAF4Keho7CjovQImhgLbmBLYkHjCWg5gS0nsKEwofUGFsQEjkBJTKCzoMaW+BMz4yaryfv6gfey2+wARERERGoT7WCebAeTQcL9UZXF0QzlyXYIwg1cz9eMP+m7BjkwaEpMpQOmwwOA6/kIwo3qVEWNH8P3XSP930vj753zk+g6iU/AdPjxtzSnKi7wa1jANhawjQVsYwHbWMA2FrCNBWxjAdtEBa6t89Xr6Z3xK+/ayvYM4q1EXRaYL9dwPd9oib5rUJeFeE51heqyMP4m1oQHFIutdBcNi9VM9bNPqssN8SETZRKfQHzIJtXlJh37SBMe+GK1mO4io6tFTXgiIqK/dwfXHVgTEIMBSwAAAABJRU5ErkJggg==",
   btnRuins:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAA6klEQVR4nO3YLQ6DQBAF4KGpr8AQBIQ7VPQkTRAYToDlBLWcAINowkkQ3KEBQaio4ARbUUP6I2Z2m2nS9/nZfS+jdokAAAAAxDzpYFumxmWQ4+ksyiIaasvUhIlPQRxJxl/Mw0jT5SYqseEOuA5PRBTEEYWJL9oqq/Fz+HkYufe9tT6Puwn2BlyHX58l2Sq7wK9BAW0ooA0FtKGANtQhgLaUEDbfxWYrttv5RDfwd6AzevpE5tXHvsXoMozsz/snBYgeoTvu4WKumFlYm+gqBuv7xbnb2JJeCKLj60qz5x+bEnCAwAAAFi6A/zyTNY1yjlRAAAAAElFTkSuQmCC"
 };
-
 const CROP={
   tree:"crops/tree_grassland.png",
   bush:"crops/bush.png",
-  tallgrass:"crops/tallgrass.png",
-  mound:"crops/grass_mound.png",
   rocks:"crops/rocks_small.png",
   bridge:"crops/bridge.png",
   path:"crops/tile_path.png",
-  water:"crops/tile_water.png",
   ruinTower:"crops/ruin_tower.png",
   ruinPlatform:"crops/ruin_platform.png",
   shrine:"crops/shrine_sheet.png",
-  chalice:"crops/chalice_sheet.png",
-  paver:"crops/env_00.png"
+  chalice:"crops/chalice_sheet.png"
 };
-
 const CATS=[
   "attached_cats/animation-3.gif",
   "attached_cats/animation-1-0_5x.gif",
@@ -139,115 +145,89 @@ const CATS=[
   "attached_cats/animation-2.gif"
 ];
 
-const FRAME_W=460;
-const N=15;
-const TOP_PAD=150;
-const SPACING=175;
-const AMP=120;
-const CENTER=FRAME_W/2;
-const TOTAL_H=TOP_PAD+(N-1)*SPACING+260;
-
+const FRAME_W=460,N=15,TOP_PAD=150,SPACING=175,AMP=120,CENTER=FRAME_W/2,TOTAL_H=TOP_PAD+(N-1)*SPACING+290;
 const nodes=[];
 for(let i=0;i<N;i++){
   const y=TOP_PAD+i*SPACING;
   const x=CENTER+AMP*Math.sin(i*Math.PI/2.15);
-  nodes.push({i,x,y,biome:i<6?"grass":"ruins"});
+  nodes.push({i,x,y,biome:i<6?"grass":"ruins"})
 }
 document.getElementById("frame").style.height=TOTAL_H+"px";
 
 function addDeco(src,x,y,w,h,opts={}){
   const im=document.createElement("img");
-  im.className="deco"+(opts.sway?" sway":"")+(opts.soft?" soft":"");
-  im.src=src;im.alt="";
-  im.style.left=x+"px";im.style.top=y+"px";
-  im.style.width=w+"px";im.style.height=h+"px";
+  im.className="deco"+(opts.sway?" sway":"");im.src=src;im.alt="";
+  im.style.left=x+"px";im.style.top=y+"px";im.style.width=w+"px";im.style.height=h+"px";
   if(opts.delay)im.style.setProperty("--delay",opts.delay);
   if(opts.flip)im.style.transform="scaleX(-1)";
-  document.getElementById("decoLayer").appendChild(im);
+  document.getElementById("decoLayer").appendChild(im)
 }
-function addSprite8(src,x,y,w,h,duration){
-  const el=document.createElement("div");
-  el.className="sprite8";el.style.left=x+"px";el.style.top=y+"px";
-  el.style.width=w+"px";el.style.height=h+"px";
-  el.style.backgroundImage="url('"+src+"')";
-  el.style.backgroundSize=(w*8)+"px "+h+"px";
-  const name="sprite8_"+Math.random().toString(36).slice(2);
+function addSprite(src,x,y,w,h,frames,duration){
+  const el=document.createElement("div");el.className="animatedSprite";
+  el.style.left=x+"px";el.style.top=y+"px";el.style.width=w+"px";el.style.height=h+"px";
+  el.style.backgroundImage="url('"+src+"')";el.style.backgroundSize=(w*frames)+"px "+h+"px";
+  const name="spr_"+Math.random().toString(36).slice(2);
   const st=document.createElement("style");
-  st.textContent="@keyframes "+name+"{from{background-position:0 0}to{background-position:-"+(w*8)+"px 0}}";
+  st.textContent="@keyframes "+name+"{from{background-position:0 0}to{background-position:-"+(w*(frames-1))+"px 0}}";
   document.head.appendChild(st);
-  el.style.animation=name+" "+(duration||1.4)+"s steps(8) infinite";
-  document.getElementById("decoLayer").appendChild(el);
+  el.style.animation=name+" "+(duration||1.4)+"s steps("+(frames-1)+") infinite";
+  document.getElementById("decoLayer").appendChild(el)
 }
 function addPond(x,y,w,h){
-  const el=document.createElement("div");
-  el.className="pond deco";
-  el.style.left=x+"px";el.style.top=y+"px";el.style.width=w+"px";el.style.height=h+"px";
-  el.style.overflow="hidden";el.style.borderRadius="50%";el.style.border="5px solid #a98a5c";
-  el.style.boxShadow="inset 0 6px 14px rgba(0,0,0,.42),0 4px 6px rgba(0,0,0,.26)";
-  const inner=document.createElement("div");
-  inner.style.position="absolute";inner.style.inset="-20px";
-  inner.style.backgroundImage="url('"+CROP.water+"')";
-  inner.style.backgroundSize="70px 30px";
-  inner.style.animation="pondflow 5.8s linear infinite";
-  el.appendChild(inner);document.getElementById("decoLayer").appendChild(el);
+  const p=document.createElement("div");p.className="pond";
+  p.style.left=x+"px";p.style.top=y+"px";p.style.width=w+"px";p.style.height=h+"px";
+  const inner=document.createElement("div");inner.className="pondInner";p.appendChild(inner);
+  document.getElementById("decoLayer").appendChild(p)
 }
-const pondStyle=document.createElement("style");
-pondStyle.textContent="@keyframes pondflow{from{background-position:0 0}to{background-position:-140px -60px}}";
-document.head.appendChild(pondStyle);
 
-// Grassland dressing — low, lateral placement so the route stays readable.
-addDeco(CROP.tree,20,35,92,122,{sway:true});
-addDeco(CROP.tree,352,78,76,100,{sway:true,delay:"-1.3s",flip:true});
-addDeco(CROP.tree,26,525,78,103,{sway:true,delay:"-2.1s"});
-addDeco(CROP.bush,342,365,64,48,{sway:true,delay:"-0.7s"});
-addDeco(CROP.bush,38,725,70,52,{sway:true,delay:"-1.6s",flip:true});
-addDeco(CROP.bush,342,870,60,46,{sway:true,delay:"-2.4s"});
-addDeco(CROP.tallgrass,58,315,62,62,{sway:true,soft:true,delay:"-2.8s"});
-addDeco(CROP.tallgrass,355,560,64,64,{sway:true,soft:true,delay:"-1.2s"});
-addDeco(CROP.mound,34,430,70,42,{sway:true,soft:true,delay:"-3s"});
-addDeco(CROP.mound,356,690,70,42,{sway:true,soft:true,delay:"-1.4s"});
-addDeco(CROP.rocks,32,945,70,56,{});
-addPond(180,300,126,84);
+// Deliberately kept at the edges so nothing collides with the route or nodes.
+addDeco(CROP.tree,12,28,82,132,{sway:true,delay:"-.9s"});
+addDeco(CROP.tree,360,205,72,117,{sway:true,delay:"-2.1s",flip:true});
+addDeco(CROP.tree,10,785,78,126,{sway:true,delay:"-1.8s"});
+addDeco(CROP.bush,358,405,62,77,{sway:true,delay:"-1.1s"});
+addDeco(CROP.bush,24,365,62,77,{sway:true,delay:"-2.7s",flip:true});
+addDeco(CROP.bush,356,720,63,78,{sway:true,delay:"-3.2s"});
+addDeco(CROP.rocks,12,960,68,51,{});
+addPond(20,465,108,72);
+addDeco(CROP.bridge,5,555,122,63,{});
 
-// Ancient Ruins dressing.
-addDeco(CROP.ruinTower,340,1020,92,126,{});
-addDeco(CROP.ruinTower,28,1250,84,116,{flip:true});
-addDeco(CROP.ruinPlatform,295,1420,115,86,{});
-addSprite8(CROP.shrine,300,1605,90,72,1.55);
-addSprite8(CROP.chalice,162,1780,40,40,1.05);
-addDeco(CROP.ruinPlatform,34,1950,105,80,{});
-addDeco(CROP.paver,207,2160,40,28,{});
-addPond(44,2320,104,66);
+addDeco(CROP.ruinTower,12,1090,88,108,{});
+addDeco(CROP.ruinTower,355,1305,88,108,{flip:true});
+addDeco(CROP.ruinPlatform,320,1505,100,120,{});
+addSprite(CROP.shrine,12,1705,92,72,10,1.45);
+addSprite(CROP.chalice,150,1880,40,40,8,1.05);
+addDeco(CROP.ruinPlatform,18,2045,96,116,{});
+addPond(344,2260,96,62);
+addDeco(CROP.ruinTower,6,2445,84,104,{});
+addDeco(CROP.ruinPlatform,344,2600,94,112,{});
 
-// Real tiled path texture from the existing Ancient Ruins crop.
 const svg=document.getElementById("pathSvg");
-svg.setAttribute("width",FRAME_W);svg.setAttribute("height",TOTAL_H);svg.setAttribute("viewBox","0 0 "+FRAME_W+" "+TOTAL_H);
-svg.innerHTML='<defs><pattern id="pathTex" patternUnits="userSpaceOnUse" width="40" height="40"><image href="'+CROP.path+'" x="0" y="0" width="40" height="40"/></pattern></defs>';
+svg.setAttribute("height",TOTAL_H);svg.setAttribute("viewBox","0 0 "+FRAME_W+" "+TOTAL_H);
+svg.innerHTML='<defs><pattern id="pathTex" patternUnits="userSpaceOnUse" width="120" height="50"><image href="'+CROP.path+'" x="0" y="0" width="120" height="50" preserveAspectRatio="none"/></pattern></defs>';
 function catmull(pts){
   let d="M "+pts[0].x+" "+pts[0].y+" ";
   for(let i=0;i<pts.length-1;i++){
     const p0=pts[i-1]||pts[i],p1=pts[i],p2=pts[i+1],p3=pts[i+2]||p2;
     const c1x=p1.x+(p2.x-p0.x)/6,c1y=p1.y+(p2.y-p0.y)/6;
     const c2x=p2.x-(p3.x-p1.x)/6,c2y=p2.y-(p3.y-p1.y)/6;
-    d+="C "+c1x+" "+c1y+", "+c2x+" "+c2y+", "+p2.x+" "+p2.y+" ";
+    d+="C "+c1x+" "+c1y+", "+c2x+" "+c2y+", "+p2.x+" "+p2.y+" "
   }
-  return d;
+  return d
 }
 const pathD=catmull(nodes);
-function path(stroke,width,transform){
+function addPath(stroke,width,transform){
   const p=document.createElementNS("http://www.w3.org/2000/svg","path");
   p.setAttribute("d",pathD);p.setAttribute("fill","none");p.setAttribute("stroke",stroke);
   p.setAttribute("stroke-width",width);p.setAttribute("stroke-linecap","round");
   if(transform)p.setAttribute("transform",transform);
   svg.appendChild(p)
 }
-path("rgba(0,0,0,.24)",40,"translate(0,5)");
-path("#6b5344",38);
-path("url(#pathTex)",30);
+addPath("rgba(0,0,0,.23)",42,"translate(0,6)");
+addPath("#6b5344",39);
+addPath("url(#pathTex)",31);
 
 function routePoint(t){
-  const seg=Math.min(N-2,Math.floor(t*(N-1)));
-  const u=t*(N-1)-seg;
+  const seg=Math.min(N-2,Math.floor(t*(N-1))),u=t*(N-1)-seg;
   const p0=nodes[Math.max(0,seg-1)],p1=nodes[seg],p2=nodes[seg+1],p3=nodes[Math.min(N-1,seg+2)];
   const u2=u*u,u3=u2*u;
   return{
@@ -256,29 +236,22 @@ function routePoint(t){
   }
 }
 
-// Four actual GIFs, one source instance each, continuously animated by the browser.
 const catEls=CATS.map((src,i)=>{
-  const im=document.createElement("img");
-  im.className="cat"+(i===0?" player":"");
-  im.src=src;im.alt="";
-  document.getElementById("frame").appendChild(im);
-  return im;
+  const im=document.createElement("img");im.className="cat"+(i===0?" player":"");
+  im.src=src;im.alt="";document.getElementById("frame").appendChild(im);return im
 });
 const catStart=performance.now();
 function animateCats(now){
   const sec=(now-catStart)/1000;
   catEls.forEach((im,i)=>{
-    let t=(sec*(0.018+i*0.0028)+i*.23)%1;
+    let t=(sec*(0.015+i*.0025)+i*.23)%1;
     if(i%2)t=1-t;
-    const p=routePoint(t);
-    const p2=routePoint(Math.min(.9999,t+.004));
-    const dx=p2.x-p.x;
-    const side=i%2===0?-1:1;
-    im.style.left=(p.x+side*44)+"px";
-    im.style.top=(p.y+7)+"px";
+    const p=routePoint(t),p2=routePoint(Math.min(.9999,t+.004));
+    const dx=p2.x-p.x,side=i%2===0?-1:1;
+    im.style.left=(p.x+side*42)+"px";im.style.top=(p.y+7)+"px";
     im.style.transform=dx<0?"translate(-50%,-100%) scaleX(-1)":"translate(-50%,-100%)";
   });
-  requestAnimationFrame(animateCats);
+  requestAnimationFrame(animateCats)
 }
 requestAnimationFrame(animateCats);
 
@@ -303,7 +276,7 @@ function render(){
       for(let s=0;s<3;s++){const st=document.createElement("img");st.src=s<stars[idx]?ASSETS.starFull:ASSETS.starEmpty;starsWrap.appendChild(st)}
       el.appendChild(starsWrap)
     }
-    if(!unlocked){const lock=document.createElement("div");lock.className="lock";el.appendChild(lock)}
+    if(!unlocked){const lk=document.createElement("div");lk.className="lock";el.appendChild(lk)}
     el.addEventListener("click",()=>{
       if(!unlocked){el.classList.remove("shake");void el.offsetWidth;el.classList.add("shake");return}
       current=idx;
@@ -316,7 +289,7 @@ function render(){
 function spawnPaws(x,y){
   for(let k=0;k<5;k++){
     const p=document.createElement("div");p.className="paw";
-    p.style.left=(x-20+k*9)+"px";p.style.top=(y-18-(k%2)*7)+"px";
+    p.style.left=(x-18+k*9)+"px";p.style.top=(y-15-(k%2)*7)+"px";
     document.getElementById("decoLayer").appendChild(p);
     let o=1;const iv=setInterval(()=>{o-=.06;p.style.opacity=o;if(o<=0){clearInterval(iv);p.remove()}},50)
   }
