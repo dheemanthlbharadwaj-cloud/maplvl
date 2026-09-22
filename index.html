@@ -181,17 +181,19 @@ function addMapSection(map,y,scale,flip,fade){
   return{zone,base,propHost,scale,map,flip}
 }
 function addAnimatedProps(section,components){
-  for(const c of components){
+  section.animated=[];
+  for(const source of components){
+    const c={...source,cells:[...source.cells]};
     const cv=document.createElement("canvas");cv.className="mapProp";cv.width=c.bw*section.map.tw;cv.height=c.bh*section.map.th;
     cv.style.left=(c.minX*section.map.tw*section.scale)+"px";cv.style.top=(c.minY*section.map.th*section.scale)+"px";
     cv.style.width=(cv.width*section.scale)+"px";cv.style.height=(cv.height*section.scale)+"px";
     cv.style.setProperty("--dur",(3.8+Math.random()*1.8).toFixed(2)+"s");cv.style.setProperty("--delay",(-Math.random()*2.8).toFixed(2)+"s");cv.classList.add("sway");
-    drawLayer(section.map,c.layer,cv,0,new Set(c.cells));section.propHost.appendChild(cv);c.canvas=cv
+    drawLayer(section.map,c.layer,cv,0,new Set(c.cells));section.propHost.appendChild(cv);c.canvas=cv;section.animated.push(c);
   }
 }
 function refreshSection(section,clock){
   renderComposite(section.map,section.base,clock,new Set(["Tile Layer 4","Tile Layer 5","Tile Layer 6"]));
-  for(const c of section.map.__animatedComponents||[])drawLayer(section.map,c.layer,c.canvas,clock,new Set(c.cells));
+  for(const c of section.animated||[])drawLayer(section.map,c.layer,c.canvas,clock,new Set(c.cells));
 }
 function createNodeImage(unlocked,node){
   const el=document.createElement("div");el.className="node"+(unlocked?"":" locked")+(node.i===current?" current":"");el.style.left=node.x+"px";el.style.top=node.y+"px";
