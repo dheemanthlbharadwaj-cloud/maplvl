@@ -251,7 +251,7 @@ function routePoint(t){
   const p0=nodes[Math.max(0,seg-1)],p1=nodes[seg],p2=nodes[seg+1],p3=nodes[Math.min(N-1,seg+2)];
   const u2=u*u,u3=u2*u;
   return{
-    x=.5*(2*p1.x+(-p0.x+p2.x)*u+(2*p0.x-5*p1.x+4*p2.x-p3.x)*u2+(-p0.x+3*p1.x-3*p2.x+p3.x)*u3),
+    x:.5*(2*p1.x+(-p0.x+p2.x)*u+(2*p0.x-5*p1.x+4*p2.x-p3.x)*u2+(-p0.x+3*p1.x-3*p2.x+p3.x)*u3),
     y:.5*(2*p1.y+(-p0.y+p2.y)*u+(2*p0.y-5*p1.y+4*p2.y-p3.y)*u2+(-p0.y+3*p1.y-3*p2.y+p3.y)*u3)
   }
 }
